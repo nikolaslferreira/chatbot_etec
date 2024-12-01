@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        .content {
+            padding: 20px;
+        }
+        #open-chatbot {
+            position: fixed;
+            bottom: 100px;
+            left: 10px;
+            padding: 15px;
+            background-color: white;
+            color: rgb(237, 0, 55);
+            border: 2px solid rgb(237, 0, 55);
+            cursor: pointer;
+            border-radius: 20px;
+        }
+        .chatbot-window {
+            display: none;
+            position: fixed;
+            bottom: 150px;
+            left: 10px;
+            width: 300px;
+            height: 330px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .chatbot-header, .chatbot-footer button {
+            background-color: rgb(237, 0, 55);
+            color: white;
+            padding: 10px;
+            border-radius: 8px 8px 0 0;
+            border: none;
+            cursor: pointer;
+        }
+        .chatbot-body {
+            padding: 10px;
+            height: calc(100% - 80px);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .bot-message {
+            background-color: rgb(237, 0, 55);
+            color: white;
+            align-self: flex-start;
+        }
+        .user-message {
+            background-color: #ddd;
+            align-self: flex-end;
+        }
+        .option-container {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 5px;
+        }
+        .option-button {
+            display: block;
+            margin: 5px 0;
+            padding: 5px;
+            background-color: #ededed;
+            border: 1px solid rgb(237, 0, 55);
+            color: rgb(237, 0, 55);
+            cursor: pointer;
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="content"></div>
+<button id="open-chatbot" onclick="toggleChat()">Chatbot</button>
+<div id="chatbot" class="chatbot-window">
+    <div class="chatbot-header">
+    </div>
+    <div class="chatbot-body" id="chat-body">
+        <div class="message bot-message"></div>
+    </div>
+    <div class="chatbot-footer">
+
+    </div>
+</div>
+
+<script>
+    class ChatBot {
+    constructor(chatBodyId, chatbotId) {
+        this.chatBody = document.getElementById(chatBodyId);
+        this.chatbot = document.getElementById(chatbotId);
+        this.servicos = [
+            { nome: "Quem somos", url: "https://etecperus.cps.sp.gov.br/quem-somos/" },
+            { nome: "Localização Etec Perus", url: "https://www.google.com/maps/place/ETEC+Gildo+Mar%C3%A7al+Bezerra+Brand%C3%A3o/@-23.4005679,-46.7516917,17z/data=!3m1!4b1!4m6!3m5!1s0x94cefcabaf34b8fd:0x21a6416674fba1bb!8m2!3d-23.4005679!4d-46.7491168!16s%2Fg%2F1s04b3n10?entry=ttu&g_ep=EgoyMDI0MTExOS4yIKXMDSoASAFQAw%3D%3D" },
+            { nome: "Informações Vestibulinho", url: "https://www.vestibulinhoetec.com.br/home/" },
+            { nome: "NSA", url: "https://nsa.cps.sp.gov.br/" },
+            { nome: "Email Institucional", url: "http://www.etec.sp.gov.br/view/Default.aspx"},
+            { nome: "Secretaria", url:"https://etecperus.cps.sp.gov.br/secretaria-academica/" },
+            { nome: "Parceria Estágios", url: "https://etecperus.cps.sp.gov.br/mural-de-estagios/" },
+            { nome: "Manual do Aluno", url: "https://etecperus.cps.sp.gov.br/manual-do-aluno-2/" },
+            { nome: "Solicitações e Cadastros", url: "https://etecperus.cps.sp.gov.br/solicitacoes-e-cadastros/" },
+            { nome: "Site Centro Paula Souza", url: "https://www.cps.sp.gov.br/" },
+            { nome: "Localização Centro Paula Souza", url: "https://www.google.com/maps/place/Centro+Paula+Souza+CPS/@-23.5386695,-46.6401468,17z/data=!4m15!1m8!3m7!1s0x94ce585a16aa44d3:0x83243e0d74da08b3!2sR.+dos+Andradas,+140+-+Santa+Ifig%C3%AAnia,+S%C3%A3o+Paulo+-+SP,+01208-000!3b1!8m2!3d-23.5386695!4d-46.6375719!16s%2Fg%2F11dz57txdy!3m5!1s0x94ce5969145a609d:0x9c798cac86ef478b!8m2!3d-23.5386691!4d-46.6375719!16s%2Fg%2F1tczx1s9?entry=ttu&g_ep=EgoyMDI0MTExMy4xIKXMDSoASAFQAw%3D%3D" },
+            { nome: "Perguntas Frequentes", acao: () => this.perguntasFrequentes() },
+            // Adicione mais serviços aqui
+        ];
+    }
+
+    toggleChat() {
+        this.chatbot.style.display = this.chatbot.style.display === 'none' ? 'block' : 'none';
+        if (this.chatbot.style.display === 'block') {
+            this.iniciarGuia();
+        }
+    }
+
+    iniciarGuia() {
+        this.chatBody.innerHTML = ''; // Limpa o chat para um novo início
+        this.mostrarMensagem("Bem-vindo ao guia de serviços da ETEC Perus! Escolha um serviço abaixo para continuar:", true);
+
+        this.servicos.forEach(servico => {
+            this.adicionarOpcao(servico.nome, servico.acao ? servico.acao : () => this.acessarServico(servico.url));
+        });
+    }
+
+    mostrarMensagem(texto, isBot = false) {
+        const mensagem = document.createElement('div');
+        mensagem.className = 'message ' + (isBot ? 'bot-message' : 'user-message');
+        mensagem.innerText = texto;
+        this.chatBody.appendChild(mensagem);
+        this.chatBody.scrollTop = this.chatBody.scrollHeight;
+    }
+
+    adicionarOpcao(texto, acao) {
+        const optionContainer = document.createElement('div');
+        optionContainer.className = 'option-container';
+
+        const botaoOpcao = document.createElement('div');
+        botaoOpcao.className = 'option-button';
+        botaoOpcao.innerText = texto;
+        botaoOpcao.onclick = acao;
+        optionContainer.appendChild(botaoOpcao);
+
+        this.chatBody.appendChild(optionContainer);
+    }
+
+    acessarServico(url) {
+        this.mostrarMensagem(`Clique no botão abaixo para acessar o serviço:`, true);
+        this.adicionarOpcao("Acessar Serviço", () => window.open(url));
+    }
+
+    perguntasFrequentes() {
+        this.chatBody.innerHTML = ''; // Limpa o chat para a seção de perguntas frequentes
+        this.mostrarMensagem("Essas são as perguntas mais frequentes sobre o site da Instituição Etec Perus:", true);
+
+        const perguntas = [
+
+            {
+                nome: "Como acessar o NSA?",
+                resposta: "Acesse o link: https://nsa.cps.sp.gov.br/ e entre com seu login e senha fornecidos pela instituição."
+            },
+            {
+                nome: "Quais os cursos oferecidos pela Etec Perus?",
+                resposta: "Acesse o link: https://www.cps.sp.gov.br/etecs/etec-gildo-marcal-bezerra-brandao-perus/."
+            },
+            {
+                nome: "Como me cadastrar no Vestibulinho?",
+                resposta: "Acesse o site https://www.vestibulinhoetec.com.br/home/. Clique em 'Inscreva-se' e siga as instruções do formulário."
+            },
+            {
+                nome: "Como encontrar informações da secretaria?",
+                resposta: "Para obter informações sobre a secretaria da Instituição, acesse o site da instituição, vá na aba Institucional -> Secretaria Acadêmica."
+            },
+            {
+                nome: "Qual o corpo docente da Etec Perus?",
+                resposta: "Para saber qual o corpo docente da Etec Perus, acesse o site da instituição, vá na aba Institucional -> Professores."
+            },
+            {
+                nome: "Qual a Equipe Gestora da Etec Perus?",
+                resposta: "Para saber qual a Equipe Gestora da Etec Perus, acesse o site da instituição, vá na aba Institucional -> Equipe Gestora."
+            },
+            {
+                nome: "Como resolver questões do Bilhete Único SPTrans e EMTU?",
+                resposta: "Acesse o site da Etec Perus, vá na aba Aluno -> Cadastro SPTrans e EMTU, ou Aluno -> Solicitações e Cadastros."
+            },
+            {
+                nome: "Como obter estágio na Etec Perus?",
+                resposta: "Para estágio acesse o site da Etec Perus, vá para a aba Instituicional -> Mural de Estágios."
+            },
+            {
+                nome: "Como fazer concurso público para docentes pela Etec Perus?",
+                resposta: "Acesse o site da Etec Perus, vá a parte de baixo do site e procure por Links Úteis -> Concurso Público."
+            },
+            {
+                nome: "Como obter o Calendário Anual da Etec Perus?",
+                resposta: "Acesse o site da Etec Perus, vá a parte de baixo do site e procure por Links Úteis -> Calendário Escolar."
+            },
+            {
+                nome: "Como acessar o Email Institucional?",
+                resposta: "Acesse o site da Etec Perus, vá a parte de baixo do site e procure por Links Úteis -> Email Institucional."
+            },
+        ];
+
+        perguntas.forEach(pergunta => {
+            this.adicionarOpcao(pergunta.nome, () => {
+                this.mostrarMensagem(pergunta.resposta, true);
+            });
+        });
+    }
+}
+
+const chatbot = new ChatBot('chat-body', 'chatbot');
+document.getElementById('open-chatbot').onclick = () => chatbot.toggleChat();
+
+</script>
+</body>
+</html>
